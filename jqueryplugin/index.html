@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projeto — jQuery: To‑do + Carrossel + Validação + Máscaras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --primary: #60a5fa;
+      --ring: rgba(96, 165, 250, 0.4);
+      --ok: #34d399;
+      --bad: #f87171;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #0f172a 0%, var(--bg) 60%);
+      color: var(--text);
+      padding: 24px;
+    }
+    .container{ max-width: 1000px; margin: 0 auto; display: grid; gap: 24px; }
+    .card {
+      width: 100%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)) , var(--card);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      padding: 20px;
+    }
+    h1 {font-size: 24px; margin: 0 0 8px; letter-spacing: .2px;}
+    h2 {font-size: 18px; margin: 0 0 10px;}
+    p { margin: 0 0 16px; color: var(--muted); }
+
+
+    .carousel { position: relative; overflow: hidden; border-radius: 16px; }
+    .carousel-track { display: flex; transition: transform .5s ease; }
+    .slide { min-width: 100%; height: 280px; display: grid; place-items: center; background: #000; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .carousel-btn { position: absolute; top: 50%; transform: translateY(-50%); border: none; background: rgba(0,0,0,.45); color: #fff; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+    .carousel-btn:hover{ background: rgba(0,0,0,.6); }
+    .prev { left: 12px; }
+    .next { right: 12px; }
+    .dots { display:flex; gap:8px; justify-content:center; margin-top:10px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.3); border: none; cursor: pointer; }
+    .dot.active { background: var(--primary); }
+
+
+    .grid { display: grid; gap: 14px; }
+    form { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text); outline: none; transition: box-shadow .15s ease, border-color .15s ease; }
+    .input:focus { border-color: var(--primary); box-shadow: 0 0 0 6px var(--ring); }
+    .btn { padding: 12px 16px; border-radius: 12px; background: var(--primary); color: #0b1020; border: none; font-weight: 600; cursor: pointer; }
+
+    ul { list-style: disc inside; padding-left: 0; margin: 0; display: grid; gap: 6px; }
+    li { padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); cursor: pointer; user-select: none; }
+    li:hover{ background: rgba(255,255,255,0.06); }
+    li.done { text-decoration: line-through; opacity: .65; }
+    .hint { color: var(--muted); font-size: 12px; }
+
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid .full { grid-column: 1 / -1; }
+    label { font-size: 13px; color: var(--muted); margin-bottom: 6px; display:block; }
+    .field { display: grid; gap: 6px; }
+    .error { color: var(--bad); font-size: 12px; margin-top: 4px; }
+    .success { color: var(--ok); font-size: 14px; margin-top: 8px; }
+
+    @media (max-width: 720px){
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .carousel-track img {
+        width: 200px;
+        height: 300px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card">
+      <h1>ESCOLHA O SEU CARRO</h1>
+    </header>
+
+
+    <section class="card" aria-labelledby="carrossel-t">
+      <h2 id="carrossel-t">carros</h2>
+      <div class="carousel" id="carousel" aria-roledescription="carousel">
+        <div class="carousel-track" id="track">
+          <div class="slide"><img src="mit-lancer-evolution-10.webp" alt="Paisagem 1"></div>
+          <div class="slide"><img src="jetta-gli-2025.webp" alt="Paisagem 2"></div>
+          <div class="slide"><img src="camaro.webp" alt="Paisagem 3"></div>
+          <div class="slide"><img src="corvette.webp" alt="Paisagem 4"></div>
+        </div>
+        <button class="carousel-btn prev" aria-label="Anterior" id="prev">◀</button>
+        <button class="carousel-btn next" aria-label="Próximo" id="next">▶</button>
+      </div>
+      <div class="dots" id="dots" aria-label="Indicadores do carrossel"></div>
+      <p class="hint">O carrossel troca de slide automaticamente e também pelos botões/bolinhas.</p>
+    </section>
+
+
+    <section class="card" aria-labelledby="todo-t">
+      <h2 id="todo-t">Lista de Tarefas (jQuery)</h2>
+      <p>Adicione itens pelo formulário. Clique em um item para marcar/desmarcar como concluído.</p>
+      <form id="todo-form" autocomplete="off" aria-label="Adicionar nova tarefa">
+        <label class="sr-only" for="todo-input">Nome da tarefa</label>
+        <input id="todo-input" class="input" type="text" name="task" placeholder="Ex.: Estudar jQuery" required minlength="3" />
+        <button class="btn" type="submit">Cadastrar</button>
+      </form>
+      <ul id="todo-list" aria-live="polite"></ul>
+      <p class="hint">Clique no item para aplicar <code>text-decoration: line-through</code>.</p>
+    </section>
+
+
+    <section class="card" aria-labelledby="cadastro-t">
+      <h2 id="cadastro-t">Validação do site </h2>
+      <p>Preencha os campos; telefone. A validação impede envio inválido.</p>
+
+      <form id="form-cadastro" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="nome">Nome completo</label>
+            <input id="nome" name="nome" class="input" type="text" placeholder="Seu nome" required minlength="3" />
+          </div>
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" class="input" type="email" placeholder="voce@exemplo.com" required />
+          </div>
+          <div class="field">
+            <label for="telefone">Telefone (máscara)</label>
+            <input id="telefone" name="telefone" class="input" type="text" placeholder="(00) 00000-0000" required />
+          </div>
+          <div class="field">
+            <label for="data">Data (máscara)</label>
+            <input id="data" name="data" class="input" type="text" placeholder="dd/mm/aaaa" required />
+          </div>
+          <div class="field full">
+            <label for="mensagem">Mensagem</label>
+            <textarea id="mensagem" name="mensagem" class="input" rows="3" placeholder="Sua mensagem" required minlength="5"></textarea>
+          </div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:10px;">
+          <button class="btn" type="submit">Enviar</button>
+          <button class="btn" type="reset" style="background:#374151; color:#e5e7eb;">Limpar</button>
+        </div>
+        <div id="status" aria-live="polite"></div>
+      </form>
+    </section>
+  </div>
+
+  <!-- jQuery (CDN) -->
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <!-- jQuery Validation -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/localization/messages_pt_BR.min.js"></script>
+  <!-- jQuery Mask Plugin -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+  <script>
+    $(function () {
+
+      const $track = $('#track');
+      const $slides = $track.children();
+      const $dotsWrap = $('#dots');
+      const total = $slides.length;
+      let index = 0;
+      let timer = null;
+
+      // criar dots
+      for (let i = 0; i < total; i++) {
+        $('<button>', { class: 'dot', 'aria-label': 'Ir ao slide ' + (i+1) })
+          .on('click', function(){ goTo(i); resetAuto(); })
+          .appendTo($dotsWrap);
+      }
+
+      function updateUI(){
+        const offset = -index * 100; 
+        $track.css('transform', 'translateX(' + offset + '%)');
+        $dotsWrap.children().removeClass('active').eq(index).addClass('active');
+      }
+      function goTo(i){ index = (i + total) % total; updateUI(); }
+      function next(){ goTo(index + 1); }
+      function prev(){ goTo(index - 1); }
+      function auto(){ timer = setInterval(next, 4000); }
+      function resetAuto(){ clearInterval(timer); auto(); }
+
+      $('#next').on('click', function(){ next(); resetAuto(); });
+      $('#prev').on('click', function(){ prev(); resetAuto(); });
+      $('#carousel').on('mouseenter', function(){ clearInterval(timer); })
+                    .on('mouseleave', function(){ resetAuto(); });
+      updateUI();
+      auto();
+
+
+      const $form = $('#todo-form');
+      const $input = $('#todo-input');
+      const $list  = $('#todo-list');
+
+      $form.on('submit', function (e) {
+        e.preventDefault();
+        const text = $input.val().trim();
+        if (!text) return;
+        const $li = $('<li>', { text, class: 'todo-item' });
+        $list.append($li);
+        $input.val('').focus();
+      });
+
+      $list.on('click', 'li', function () { $(this).toggleClass('done'); });
+
+
+      $('#telefone').mask('(00) 00000-0000');
+      $('#data').mask('00/00/0000');
+
+      $('#form-cadastro').validate({
+        errorClass: 'error',
+        rules: {
+          nome: { required: true, minlength: 3 },
+          email: { required: true, email: true },
+          telefone: { required: true, minlength: 15 },
+          data: { required: true, minlength: 10 },
+          mensagem: { required: true, minlength: 5 }
+        },
+        submitHandler: function(form, event){
+          event.preventDefault();
+          $('#status').html('<p class="success">✔ Formulário enviado com sucesso (demo). Nenhum dado real foi transmitido.</p>');
+          form.reset();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
